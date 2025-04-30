@@ -14,6 +14,7 @@
     #aluno-info, #resultado, #acoes { margin-top: 20px; }
     .aluno { margin-bottom: 5px; }
     #impressao { display: none; }
+    .erro { border: 2px solid red; }
   </style>
 </head>
 <body>
@@ -27,10 +28,11 @@
     <label>Turma: <input type="text" id="turma" required></label>
     <label>Componente Curricular: <input type="text" id="componente" required></label>
     <label>Nome do Aluno:
-      <select id="lista-alunos">
+      <select id="lista-alunos" required>
         <option value="">Selecione um aluno</option>
         <option value="Ana Paula Mendes">Ana Paula Mendes - 12/03/1990 - Parda</option>
-        <!-- demais opções -->
+        <option value="João Carlos Silva">João Carlos Silva - 02/08/2008 - Branco</option>
+        <option value="Maria Luísa Fernandes">Maria Luísa Fernandes - 15/11/2007 - Negra</option>
       </select>
     </label>
   </form>
@@ -45,9 +47,10 @@
   <div id="resultado">
     <h3>Resultado:</h3>
     <p id="res-nome"></p>
-    <p id="res-acertos">Acertos: </p>
-    <p id="res-erros">Erros: </p>
-    <p id="res-percentual">Percentual de Acertos: </p>
+    <p id="res-acertos"></p>
+    <p id="res-erros"></p>
+    <p id="res-percentual"></p>
+    <p id="res-situacao"></p>
   </div>
 
   <div id="acoes">
@@ -66,11 +69,13 @@
     <p id="imp-acertos"></p>
     <p id="imp-erros"></p>
     <p id="imp-percentual"></p>
+    <p id="imp-situacao"></p>
   </div>
 
   <script>
     let usandoFrontal = true;
     let stream;
+    let tirouFoto = false;
 
     async function iniciarCamera() {
       if (stream) stream.getTracks().forEach(track => track.stop());
@@ -87,6 +92,38 @@
     }
 
     function tirarFoto() {
+      const campos = ['escola', 'ano', 'turma', 'componente', 'lista-alunos'];
+      let tudoOk = true;
+      campos.forEach(id => {
+        const campo = document.getElementById(id);
+        campo.classList.remove('erro');
+        if (!campo.value.trim()) {
+          campo.classList.add('erro');
+          tudoOk = false;
+        }
+      });
+
+      if (!tudoOk) {
+        alert('Preencha todos os campos corretamente antes de continuar.');
+        return;
+      }
+
+      const canvas = document.getElementById('canvas');
+      const video = document.getElementById('video');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      tirouFoto = true;
+      corrigirProva();
+    }
+
+    function corrigirProva() {
+      if (!tirouFoto) {
+        alert('Por favor, tire uma foto do cartão resposta antes de corrigir.');
+        return;
+      }
+
       const aluno = document.getElementById('lista-alunos').value;
       const escola = document.getElementById('escola').value;
       const ano = document.getElementById('ano').value;
@@ -96,11 +133,13 @@
       const acertos = Math.floor(Math.random() * 31);
       const erros = 30 - acertos;
       const percentual = ((acertos / 30) * 100).toFixed(2);
+      const situacao = percentual >= 70 ? 'Aprovado' : 'Reprovado';
 
       document.getElementById('res-nome').textContent = `Aluno: ${aluno}`;
       document.getElementById('res-acertos').textContent = `Acertos: ${acertos}`;
       document.getElementById('res-erros').textContent = `Erros: ${erros}`;
       document.getElementById('res-percentual').textContent = `Percentual de Acertos: ${percentual}%`;
+      document.getElementById('res-situacao').textContent = `Situação: ${situacao}`;
 
       document.getElementById('imp-nome').textContent = `Aluno: ${aluno}`;
       document.getElementById('imp-escola').textContent = `Escola: ${escola}`;
@@ -110,10 +149,17 @@
       document.getElementById('imp-acertos').textContent = `Acertos: ${acertos}`;
       document.getElementById('imp-erros').textContent = `Erros: ${erros}`;
       document.getElementById('imp-percentual').textContent = `Percentual: ${percentual}%`;
+      document.getElementById('imp-situacao').textContent = `Situação: ${situacao}`;
     }
 
     function gerarPDF() {
-      alert('Função de gerar PDF em desenvolvimento.');
+      const conteudo = document.getElementById('impressao').innerHTML;
+      const win = window.open('', '', 'width=800,height=600');
+      win.document.write('<html><head><title>Relatório</title></head><body>');
+      win.document.write(conteudo);
+      win.document.write('</body></html>');
+      win.document.close();
+      win.print();
     }
 
     function enviarEmail() {
@@ -124,4 +170,5 @@
   </script>
 </body>
 </html>
+
 
