@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Boletim Digital - Secretaria de Educação de Tufilândia</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@2.1.1/dist/tesseract.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    header {
+      background: #004080;
+      color: #fff;
+      padding: 10px;
+      text-align: center;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    .form-section, .camera-section {
+      margin-top: 20px;
+    }
+    label {
+      display: block;
+      margin: 5px 0 2px;
+    }
+    input, select, button {
+      padding: 6px;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    video, canvas {
+      width: 100%;
+      max-width: 400px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    Secretaria de Educação de Tufilândia - MA
+  </header>
+
+  <div class="form-section">
+    <h3>Dados do Aluno</h3>
+    <label>Nome da Escola</label>
+    <input type="text" id="escola">
+
+    <label>Ano</label>
+    <input type="text" id="ano">
+
+    <label>Turma</label>
+    <input type="text" id="turma">
+
+    <label>Componente Curricular</label>
+    <input type="text" id="componente">
+
+    <label>Nome do Aluno</label>
+    <select id="aluno">
+      <option value="Ana Paula Mendes|12/03/1990|Parda">Ana Paula Mendes</option>
+      <option value="João Ricardo Lima|27/07/1985|Branco">João Ricardo Lima</option>
+      <option value="Carla Simone Ferreira|05/11/1992|Negra">Carla Simone Ferreira</option>
+      <option value="Bruno Henrique Silva|19/01/1988|Parda">Bruno Henrique Silva</option>
+      <option value="Luana Martins Oliveira|03/06/1994|Branca">Luana Martins Oliveira</option>
+      <option value="Felipe Augusto Rocha|22/09/1983|Negro">Felipe Augusto Rocha</option>
+      <option value="Mariana Costa Souza|16/02/1996|Branca">Mariana Costa Souza</option>
+      <option value="Rafael Gomes Pereira|08/12/1981|Pardo">Rafael Gomes Pereira</option>
+      <option value="Tânia Regina Barros|24/04/1989|Negra">Tânia Regina Barros</option>
+      <option value="Diego César Andrade|01/10/1991|Pardo">Diego César Andrade</option>
+      <option value="Paula Cristina Dias|30/07/1987|Branca">Paula Cristina Dias</option>
+      <option value="Leandro Ramos Teixeira|14/05/1993|Pardo">Leandro Ramos Teixeira</option>
+      <option value="Camila Nogueira Prado|09/09/1995|Branca">Camila Nogueira Prado</option>
+      <option value="André Luiz Macedo|28/01/1990|Negro">André Luiz Macedo</option>
+      <option value="Juliana Rocha Fernandes|13/08/1986|Branca">Juliana Rocha Fernandes</option>
+      <option value="Eduardo Melo Santiago|07/03/1992|Pardo">Eduardo Melo Santiago</option>
+      <option value="Vanessa Ribeiro Cunha|25/06/1994|Negra">Vanessa Ribeiro Cunha</option>
+      <option value="Rodrigo Lopes Carvalho|10/12/1984|Branco">Rodrigo Lopes Carvalho</option>
+      <option value="Aline Marques Bastos|18/02/1989|Parda">Aline Marques Bastos</option>
+      <option value="Marcelo Tavares Pinto|02/11/1990|Branco">Marcelo Tavares Pinto</option>
+      <option value="Priscila Souza Meireles|21/05/1988|Branca">Priscila Souza Meireles</option>
+      <option value="Wellington Dias Lima|11/01/1985|Negro">Wellington Dias Lima</option>
+      <option value="Beatriz Andrade Costa|06/07/1996|Branca">Beatriz Andrade Costa</option>
+      <option value="Renato César Moura|04/04/1987|Pardo">Renato César Moura</option>
+      <option value="Tatiane Farias Monteiro|29/09/1993|Parda">Tatiane Farias Monteiro</option>
+      <option value="Guilherme Torres Braga|15/12/1991|Branco">Guilherme Torres Braga</option>
+      <option value="Larissa Almeida Ventura|26/06/1995|Branca">Larissa Almeida Ventura</option>
+      <option value="Pedro Henrique Morais|17/03/1986|Negro">Pedro Henrique Morais</option>
+      <option value="Renata Lopes Andrade|23/08/1990|Branca">Renata Lopes Andrade</option>
+      <option value="Alexandre Reis Cardoso|31/10/1983|Pardo">Alexandre Reis Cardoso</option>
+    </select>
+
+    <label>Quantidade de questões acertadas</label>
+    <input type="number" id="acertos">
+
+    <label>Quantidade de questões erradas</label>
+    <input type="number" id="erros">
+
+    <label>Percentual de acerto (%)</label>
+    <input type="number" id="percentual">
+  </div>
+
+  <div class="camera-section">
+    <h3>Correção via Câmera (Cartão Resposta)</h3>
+    <button onclick="trocarCamera()">Alternar Câmera</button>
+    <button onclick="tirarFoto()">Capturar Cartão</button>
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+    <button onclick="lerCartao()">Corrigir Cartão</button>
+  </div>
+
+  <script>
+    let usandoFrontal = false;
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+
+    async function iniciarCamera() {
+      const constraints = {
+        video: {
+          facingMode: usandoFrontal ? 'user' : 'environment'
+        }
+      };
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia(constraints);
+        video.srcObject = stream;
+      } catch (err) {
+        alert('Erro ao acessar a câmera');
+      }
+    }
+
+    function trocarCamera() {
+      usandoFrontal = !usandoFrontal;
+      iniciarCamera();
+    }
+
+    function tirarFoto() {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0);
+    }
+
+    function lerCartao() {
+      Tesseract.recognize(canvas, 'por', {
+        logger: m => console.log(m)
+      }).then(({ data: { text } }) => {
+        alert('Texto capturado:\n' + text);
+        // Aqui você pode adicionar a lógica para comparar com o gabarito
+      });
+    }
+
+    iniciarCamera();
+  </script>
+</body>
+</html>
